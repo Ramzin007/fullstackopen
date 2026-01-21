@@ -1,0 +1,7 @@
+browser -> server: HTTP GET /spa
+server --> browser: HTML document
+browser -> server: GET main.css
+browser -> server: GET spa.js
+server --> browser: JavaScript application
+browser -> server: GET data.json
+server --> browser: JSON data

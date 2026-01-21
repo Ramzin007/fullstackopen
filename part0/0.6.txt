@@ -1,0 +1,3 @@
+browser -> server: HTTP POST /new_note_spa
+server --> browser: JSON response
+browser updates UI

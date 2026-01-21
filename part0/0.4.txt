@@ -1,0 +1,4 @@
+browser -> server: HTTP POST /new_note
+server --> browser: 302 redirect
+browser -> server: HTTP GET /notes
+server --> browser: HTML document
