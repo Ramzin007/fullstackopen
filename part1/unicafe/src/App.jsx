@@ -12,6 +12,7 @@ const Statistic = ({ text, value }) => (
 )
 
 const App = () => {
+  const [verygood, setVerygood] = useState(0)
   const [good, setGood] = useState(0)
   const [neutral, setNeutral] = useState(0)
   const [bad, setBad] = useState(0)
@@ -21,6 +22,7 @@ const App = () => {
     <div>
       <h1>give feedback</h1>
 
+      <button onClick={() => setVerygood(verygood + 1)} text="very good"></button>
       <Button onClick={() => setGood(good + 1)} text="good" />
       <Button onClick={() => setNeutral(neutral + 1)} text="neutral" />
       <Button onClick={() => setBad(bad + 1)} text="bad" />
@@ -33,12 +35,13 @@ const App = () => {
             <>
             <table>
               <tbody>
+                <Statistic text="very good" value={verygood} />
                 <Statistic text="good" value={good} />
                 <Statistic text="neutral" value={neutral} />
                 <Statistic text="bad" value={bad} />
                 <Statistic text="all" value={all} />
-                <Statistic text="average" value={(good - bad) / all} />
-                <Statistic text="positive" value={(good / all) * 100 + ' %'} />
+                <Statistic text="average" value={(2*verygood + good - bad) / all} />
+                <Statistic text="positive" value={((verygood+good) / all) * 100 + ' %'} />
               </tbody>
             </table>
               
