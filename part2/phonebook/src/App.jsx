@@ -1,10 +1,57 @@
 import { useState } from 'react'
 
+const Filter = ({ filter, onFilterChange }) => (
+  <div>
+    filter shown with{' '}
+    <input
+      value={filter}
+      onChange={onFilterChange}
+    />
+  </div>
+)
+
+const PersonForm = ({
+  onSubmit,
+  newName,
+  onNameChange,
+  newNumber,
+  onNumberChange
+}) => (
+  <form onSubmit={onSubmit}>
+    <div>
+      name:{' '}
+      <input
+        value={newName}
+        onChange={onNameChange}
+      />
+    </div>
+
+    <div>
+      number:{' '}
+      <input
+        value={newNumber}
+        onChange={onNumberChange}
+      />
+    </div>
+
+    <button type="submit">add</button>
+  </form>
+)
+
+const Persons = ({ persons }) => (
+  <ul>
+    {persons.map(person =>
+      <li key={person.name}>
+        {person.name} {person.number}
+      </li>
+    )}
+  </ul>
+)
+
 const App = () => {
   const [persons, setPersons] = useState([
     { name: 'Arto Hellas', number: '946565354' },
-    { name: 'Ada Lovelace', number: '123456789' },
-    { name: 'Dan Abramov', number: '987654321' }
+    { name: 'Ada Lovelace', number: '123456789' }
   ])
 
   const [newName, setNewName] = useState('')
@@ -41,45 +88,24 @@ const App = () => {
     <div>
       <h2>Phonebook</h2>
 
-      <div>
-        filter shown with{' '}
-        <input
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
-      </div>
+      <Filter
+        filter={filter}
+        onFilterChange={(e) => setFilter(e.target.value)}
+      />
 
-      <h3>add a new</h3>
+      <h3>Add a new</h3>
 
-      <form onSubmit={addPerson}>
-        <div>
-          name:{' '}
-          <input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-          />
-        </div>
+      <PersonForm
+        onSubmit={addPerson}
+        newName={newName}
+        onNameChange={(e) => setNewName(e.target.value)}
+        newNumber={newNumber}
+        onNumberChange={(e) => setNewNumber(e.target.value)}
+      />
 
-        <div>
-          number:{' '}
-          <input
-            value={newNumber}
-            onChange={(e) => setNewNumber(e.target.value)}
-          />
-        </div>
+      <h3>Numbers</h3>
 
-        <button type="submit">add</button>
-      </form>
-
-      <h2>Numbers</h2>
-
-      <ul>
-        {personsToShow.map(person =>
-          <li key={person.name}>
-            {person.name} {person.number}
-          </li>
-        )}
-      </ul>
+      <Persons persons={personsToShow} />
     </div>
   )
 }
