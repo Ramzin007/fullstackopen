@@ -1,12 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import personService from './services/persons'
 
 const Filter = ({ filter, onFilterChange }) => (
   <div>
     filter shown with{' '}
-    <input
-      value={filter}
-      onChange={onFilterChange}
-    />
+    <input value={filter} onChange={onFilterChange} />
   </div>
 )
 
@@ -20,20 +18,12 @@ const PersonForm = ({
   <form onSubmit={onSubmit}>
     <div>
       name:{' '}
-      <input
-        value={newName}
-        onChange={onNameChange}
-      />
+      <input value={newName} onChange={onNameChange} />
     </div>
-
     <div>
       number:{' '}
-      <input
-        value={newNumber}
-        onChange={onNumberChange}
-      />
+      <input value={newNumber} onChange={onNumberChange} />
     </div>
-
     <button type="submit">add</button>
   </form>
 )
@@ -41,7 +31,7 @@ const PersonForm = ({
 const Persons = ({ persons }) => (
   <ul>
     {persons.map(person =>
-      <li key={person.name}>
+      <li key={person.id}>
         {person.name} {person.number}
       </li>
     )}
@@ -49,14 +39,18 @@ const Persons = ({ persons }) => (
 )
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '946565354' },
-    { name: 'Ada Lovelace', number: '123456789' }
-  ])
-
+  const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
+
+  useEffect(() => {
+    personService
+      .getAll()
+      .then(response => {
+        setPersons(response.data)
+      })
+  }, [])
 
   const addPerson = (event) => {
     event.preventDefault()
