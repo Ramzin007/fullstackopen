@@ -1,42 +1,8 @@
 import { useState, useEffect } from 'react'
-import personService from './services/persons'
-
-const Filter = ({ filter, onFilterChange }) => (
-  <div>
-    filter shown with{' '}
-    <input value={filter} onChange={onFilterChange} />
-  </div>
-)
-
-const PersonForm = ({
-  onSubmit,
-  newName,
-  onNameChange,
-  newNumber,
-  onNumberChange
-}) => (
-  <form onSubmit={onSubmit}>
-    <div>
-      name:{' '}
-      <input value={newName} onChange={onNameChange} />
-    </div>
-    <div>
-      number:{' '}
-      <input value={newNumber} onChange={onNumberChange} />
-    </div>
-    <button type="submit">add</button>
-  </form>
-)
-
-const Persons = ({ persons }) => (
-  <ul>
-    {persons.map(person =>
-      <li key={person.id}>
-        {person.name} {person.number}
-      </li>
-    )}
-  </ul>
-)
+import personsService from './services/persons'
+import Filter from './components/Filter'
+import PersonForm from './components/PersonForm'
+import Persons from './components/Persons'
 
 const App = () => {
   const [persons, setPersons] = useState([])
@@ -44,23 +10,41 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
 
+  // Step 7: fetch from backend
   useEffect(() => {
-    personService
-      .getAll()
-      .then(response => {
-        setPersons(response.data)
-      })
+    personsService.getAll().then(initialPersons => {
+      setPersons(initialPersons)
+    })
   }, [])
 
+  // Step 10*: add OR update
   const addPerson = (event) => {
     event.preventDefault()
 
-    const nameExists = persons.some(
-      person => person.name === newName
-    )
+    const existingPerson = persons.find(p => p.name === newName)
 
-    if (nameExists) {
-      alert(`${newName} is already added to phonebook`)
+    if (existingPerson) {
+      const confirmUpdate = window.confirm(
+        `${newName} is already added to phonebook, replace the old number?`
+      )
+
+      if (!confirmUpdate) return
+
+      const updatedPerson = {
+        ...existingPerson,
+        number: newNumber
+      }
+
+      personsService
+        .update(existingPerson.id, updatedPerson)
+        .then(returnedPerson => {
+          setPersons(persons.map(p =>
+            p.id !== existingPerson.id ? p : returnedPerson
+          ))
+          setNewName('')
+          setNewNumber('')
+        })
+
       return
     }
 
@@ -69,13 +53,25 @@ const App = () => {
       number: newNumber
     }
 
-    setPersons(persons.concat(personObject))
-    setNewName('')
-    setNewNumber('')
+    personsService.create(personObject).then(returnedPerson => {
+      setPersons(persons.concat(returnedPerson))
+      setNewName('')
+      setNewNumber('')
+    })
   }
 
-  const personsToShow = persons.filter(person =>
-    person.name.toLowerCase().includes(filter.toLowerCase())
+  // Step 9: delete
+  const handleDelete = (id) => {
+    const person = persons.find(p => p.id === id)
+    if (!window.confirm(`Delete ${person.name}?`)) return
+
+    personsService.remove(id).then(() => {
+      setPersons(persons.filter(p => p.id !== id))
+    })
+  }
+
+  const personsToShow = persons.filter(p =>
+    p.name.toLowerCase().includes(filter.toLowerCase())
   )
 
   return (
@@ -84,22 +80,25 @@ const App = () => {
 
       <Filter
         filter={filter}
-        onFilterChange={(e) => setFilter(e.target.value)}
+        handleFilterChange={(e) => setFilter(e.target.value)}
       />
 
       <h3>Add a new</h3>
 
       <PersonForm
-        onSubmit={addPerson}
+        addPerson={addPerson}
         newName={newName}
-        onNameChange={(e) => setNewName(e.target.value)}
+        handleNameChange={(e) => setNewName(e.target.value)}
         newNumber={newNumber}
-        onNumberChange={(e) => setNewNumber(e.target.value)}
+        handleNumberChange={(e) => setNewNumber(e.target.value)}
       />
 
       <h3>Numbers</h3>
 
-      <Persons persons={personsToShow} />
+      <Persons
+        persons={personsToShow}
+        handleDelete={handleDelete}
+      />
     </div>
   )
 }
