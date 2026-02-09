@@ -1,50 +1,53 @@
 import { useState, useEffect } from 'react'
-import personsService from './services/persons'
+import personService from './services/persons'
+
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import Notification from './components/Notification'
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
+  const [notification, setNotification] = useState(null)
 
-  // Step 7: fetch from backend
   useEffect(() => {
-    personsService.getAll().then(initialPersons => {
-      setPersons(initialPersons)
+    personService.getAll().then(response => {
+      setPersons(response.data)
     })
   }, [])
 
-  // Step 10*: add OR update
   const addPerson = (event) => {
     event.preventDefault()
 
     const existingPerson = persons.find(p => p.name === newName)
 
     if (existingPerson) {
-      const confirmUpdate = window.confirm(
-        `${newName} is already added to phonebook, replace the old number?`
-      )
+      if (
+        window.confirm(
+          `${newName} is already added. Replace the old number?`
+        )
+      ) {
+        const updatedPerson = {
+          ...existingPerson,
+          number: newNumber
+        }
 
-      if (!confirmUpdate) return
+        personService
+          .update(existingPerson.id, updatedPerson)
+          .then(response => {
+            setPersons(
+              persons.map(p =>
+                p.id !== existingPerson.id ? p : response.data
+              )
+            )
 
-      const updatedPerson = {
-        ...existingPerson,
-        number: newNumber
+            setNotification(`Updated ${response.data.name}`)
+            setTimeout(() => setNotification(null), 3000)
+          })
       }
-
-      personsService
-        .update(existingPerson.id, updatedPerson)
-        .then(returnedPerson => {
-          setPersons(persons.map(p =>
-            p.id !== existingPerson.id ? p : returnedPerson
-          ))
-          setNewName('')
-          setNewNumber('')
-        })
-
       return
     }
 
@@ -53,51 +56,54 @@ const App = () => {
       number: newNumber
     }
 
-    personsService.create(personObject).then(returnedPerson => {
-      setPersons(persons.concat(returnedPerson))
+    personService.create(personObject).then(response => {
+      setPersons(persons.concat(response.data))
+
+      setNotification(`Added ${response.data.name}`)
+      setTimeout(() => setNotification(null), 3000)
+
       setNewName('')
       setNewNumber('')
     })
   }
 
-  // Step 9: delete
-  const handleDelete = (id) => {
+  const deletePerson = (id) => {
     const person = persons.find(p => p.id === id)
-    if (!window.confirm(`Delete ${person.name}?`)) return
 
-    personsService.remove(id).then(() => {
-      setPersons(persons.filter(p => p.id !== id))
-    })
+    if (window.confirm(`Delete ${person.name}?`)) {
+      personService.remove(id).then(() => {
+        setPersons(persons.filter(p => p.id !== id))
+
+        setNotification(`Deleted ${person.name}`)
+        setTimeout(() => setNotification(null), 3000)
+      })
+    }
   }
-
-  const personsToShow = persons.filter(p =>
-    p.name.toLowerCase().includes(filter.toLowerCase())
-  )
 
   return (
     <div>
       <h2>Phonebook</h2>
 
-      <Filter
-        filter={filter}
-        handleFilterChange={(e) => setFilter(e.target.value)}
-      />
+      <Notification message={notification} />
+
+      <Filter filter={filter} setFilter={setFilter} />
 
       <h3>Add a new</h3>
 
       <PersonForm
         addPerson={addPerson}
         newName={newName}
-        handleNameChange={(e) => setNewName(e.target.value)}
         newNumber={newNumber}
-        handleNumberChange={(e) => setNewNumber(e.target.value)}
+        setNewName={setNewName}
+        setNewNumber={setNewNumber}
       />
 
       <h3>Numbers</h3>
 
       <Persons
-        persons={personsToShow}
-        handleDelete={handleDelete}
+        persons={persons}
+        filter={filter}
+        deletePerson={deletePerson}
       />
     </div>
   )
