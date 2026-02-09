@@ -1,16 +1,10 @@
-const Persons = ({ persons, filter, deletePerson }) => {
-  if (!Array.isArray(persons)) return null
-
-  const personsToShow = persons.filter(person =>
-    person.name.toLowerCase().includes(filter.toLowerCase())
-  )
-
+const Persons = ({ persons, handleDelete }) => {
   return (
     <ul>
-      {personsToShow.map(person => (
+      {persons.map(person => (
         <li key={person.id}>
-          {person.name} {person.number}{' '}
-          <button onClick={() => deletePerson(person.id)}>
+          {person.name} {person.number}
+          <button onClick={() => handleDelete(person.id)}>
             delete
           </button>
         </li>
