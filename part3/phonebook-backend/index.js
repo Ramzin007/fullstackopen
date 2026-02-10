@@ -5,7 +5,7 @@ const port = 3001
 
 app.use(express.json())
 
-let person = [
+let persons = [
     { 
       "id": "1",
       "name": "Arto Hellas", 
@@ -29,18 +29,30 @@ let person = [
 ]
 
 app.get('/api/persons' , (req,res) => {
-    res.json(person)
+    res.json(persons)
 })
 
 app.get('/info' , (req, res) => {
   const date = new Date()
   res.send(`
     <div>
-      <p>Phonebook has info for ${person.length} people</p>
+      <p>Phonebook has info for ${persons.length} people</p>
       <p>${date}</p>
     </div>
   `)
 })
+
+app.get('/api/persons/:id', (req, res) => {
+  const id = req.params.id
+  const person = persons.find(person => person.id === id)
+
+  if (!person) {
+    return res.status(404).json({ error: 'person not found' })
+  }
+
+  res.json(person)
+})
+
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`)
