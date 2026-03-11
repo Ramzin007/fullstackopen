@@ -18,7 +18,6 @@ const App = () => {
     country.name.common.toLowerCase().includes(filter.toLowerCase())
   )
 
-  // 🔥 derived, NOT state
   const selectedCountry =
     filteredCountries.length === 1
       ? filteredCountries[0]
@@ -35,7 +34,7 @@ const App = () => {
         value={filter}
         onChange={e => {
           setFilter(e.target.value)
-          setManualCountry(null) // reset manual selection
+          setManualCountry(null)
         }}
       />
 

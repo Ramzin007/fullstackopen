@@ -1,84 +1,94 @@
+require('dotenv').config()
+
 const express = require('express')
+const mongoose = require('mongoose')
+const Person = require('./models/person')
+
 const app = express()
 
 app.use(express.json())
-app.use(express.static('dist'))
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456"
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523"
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345"
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122"
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('Connected to MongoDB')
+  })
+  .catch(error => {
+    console.log('Error connecting to MongoDB:', error.message)
+  })
+
+
+// GET all persons
+app.get('/api/persons', async (req, res) => {
+  try {
+    const persons = await Person.find({})
+    res.json(persons)
+  } catch (error) {
+    res.status(500).json({ error: 'database error' })
   }
-]
-
-app.get('/api/persons', (req, res) => {
-  res.json(persons)
 })
 
-app.get('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  const person = persons.find(p => p.id === id)
 
-  if (!person) {
-    return res.status(404).end()
+app.get('/api/persons/:id', async (req, res) => {
+  try {
+    const person = await Person.findById(req.params.id)
+
+    if (person) {
+      res.json(person)
+    } else {
+      res.status(404).end()
+    }
+
+  } catch (error) {
+    res.status(400).json({ error: 'malformatted id' })
   }
-
-  res.json(person)
 })
 
-app.delete('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  persons = persons.filter(p => p.id !== id)
-  res.status(204).end()
-})
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', async (req, res) => {
+
   const body = req.body
 
   if (!body.name || !body.number) {
-    return res.status(400).json({ error: 'name or number missing' })
+    return res.status(400).json({
+      error: 'name or number missing'
+    })
   }
 
-  if (persons.some(p => p.name === body.name)) {
-    return res.status(400).json({ error: 'name must be unique' })
+  try {
+
+    const person = new Person({
+      name: body.name,
+      number: body.number
+    })
+
+    const savedPerson = await person.save()
+
+    res.json(savedPerson)
+
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+
+// DELETE person
+app.delete('/api/persons/:id', async (req, res) => {
+
+  try {
+
+    await Person.findByIdAndDelete(req.params.id)
+
+    res.status(204).end()
+
+  } catch (error) {
+    res.status(400).json({ error: 'malformatted id' })
   }
 
-  const newPerson = {
-    id: Math.floor(Math.random() * 10000),
-    name: body.name,
-    number: body.number
-  }
-
-  persons = persons.concat(newPerson)
-  res.json(newPerson)
 })
 
-app.get('/info', (req, res) => {
-  res.send(`
-    <p>Phonebook has info for ${persons.length} people</p>
-    <p>${new Date()}</p>
-  `)
-})
-
-app.use((req, res) => {
-  res.status(404).json({ error: 'unknown endpoint' })
-})
 
 const PORT = process.env.PORT || 3001
-app.listen(PORT)
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
