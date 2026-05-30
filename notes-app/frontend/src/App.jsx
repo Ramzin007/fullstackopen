@@ -1,20 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import Footer from './components/Footer'
 import Note from './components/Note'
 import Notification from './components/Notification'
-import LoginForm from './components/LoginForm'
-import NoteForm from './components/NoteForm'
-import Togglable from './components/Togglable'
 import noteService from './services/notes'
-import loginService from './services/login'
 
 const App = () => {
   const [notes, setNotes] = useState([])
+  const [newNote, setNewNote] = useState('')
   const [showAll, setShowAll] = useState(true)
-  const [user, setUser] = useState(null)
-  const [message, setMessage] = useState(null)
-  const [messageType, setMessageType] = useState('success')
-
-  const noteFormRef = useRef()
+  const [errorMessage, setErrorMessage] = useState(null)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
 
   useEffect(() => {
     noteService.getAll().then(initialNotes => {
@@ -22,117 +18,85 @@ const App = () => {
     })
   }, [])
 
-  useEffect(() => {
-    const loggedUserJSON = window.localStorage.getItem('loggedNoteAppUser')
-
-    if (loggedUserJSON) {
-      const user = JSON.parse(loggedUserJSON)
-      setUser(user)
-      noteService.setToken(user.token)
+  const addNote = event => {
+    event.preventDefault()
+    const noteObject = {
+      content: newNote,
+      important: Math.random() > 0.5
     }
-  }, [])
 
-  const showNotification = (text, type = 'success') => {
-    setMessage(text)
-    setMessageType(type)
-
-    setTimeout(() => {
-      setMessage(null)
-    }, 5000)
-  }
-
-  const handleLogin = async credentials => {
-    try {
-      const user = await loginService.login(credentials)
-
-      window.localStorage.setItem(
-        'loggedNoteAppUser',
-        JSON.stringify(user)
-      )
-
-      noteService.setToken(user.token)
-      setUser(user)
-      showNotification(`${user.name} logged in`)
-    } catch (exception) {
-      showNotification('wrong username or password', 'error')
-    }
-  }
-
-  const handleLogout = () => {
-    window.localStorage.removeItem('loggedNoteAppUser')
-    noteService.setToken(null)
-    setUser(null)
-  }
-
-  const addNote = async noteObject => {
-    noteFormRef.current.toggleVisibility()
-
-    try {
-      const returnedNote = await noteService.create(noteObject)
+    noteService.create(noteObject).then(returnedNote => {
       setNotes(notes.concat(returnedNote))
-      showNotification(`added '${returnedNote.content}'`)
-    } catch (exception) {
-      showNotification(
-        exception.response?.data?.error || 'failed to add note',
-        'error'
-      )
-    }
+      setNewNote('')
+    })
   }
 
-  const toggleImportanceOf = async id => {
+  const toggleImportanceOf = id => {
     const note = notes.find(n => n.id === id)
+    const changedNote = { ...note, important: !note.important }
 
-    const changedNote = {
-      ...note,
-      important: !note.important
-    }
-
-    try {
-      const returnedNote = await noteService.update(id, changedNote)
-      setNotes(notes.map(note => note.id !== id ? note : returnedNote))
-    } catch (exception) {
-      showNotification(
-        `note '${note.content}' was already removed from server`,
-        'error'
-      )
-      setNotes(notes.filter(n => n.id !== id))
-    }
+    noteService
+      .update(id, changedNote)
+      .then(returnedNote => {
+        setNotes(notes.map(note => (note.id !== id ? note : returnedNote)))
+      })
+      .catch(() => {
+        setErrorMessage(
+          `Note '${note.content}' was already removed from server`
+        )
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+        setNotes(notes.filter(n => n.id !== id))
+      })
   }
 
-  const notesToShow = showAll
-    ? notes
-    : notes.filter(note => note.important)
+  const handleLogin = event => {
+    event.preventDefault()
+    console.log('logging in with', username, password)
+  }
+
+  const handleNoteChange = event => {
+    setNewNote(event.target.value)
+  }
+
+  const notesToShow = showAll ? notes : notes.filter(note => note.important)
 
   return (
     <div>
-      <h1>Notes app</h1>
+      <h1>Notes</h1>
+      <Notification message={errorMessage} />
 
-      <Notification message={message} type={messageType} />
-
-      {!user && (
+      <h2>Login</h2>
+      <form onSubmit={handleLogin}>
         <div>
-          <h2>Login</h2>
-          <LoginForm handleLogin={handleLogin} />
+          <label>
+            username
+            <input
+              type="text"
+              value={username}
+              onChange={({ target }) => setUsername(target.value)}
+            />
+          </label>
         </div>
-      )}
-
-      {user && (
         <div>
-          <p>
-            {user.name} logged in
-            <button onClick={handleLogout}>logout</button>
-          </p>
-
-          <Togglable buttonLabel="new note" ref={noteFormRef}>
-            <NoteForm createNote={addNote} />
-          </Togglable>
+          <label>
+            password
+            <input
+              type="password"
+              value={password}
+              onChange={({ target }) => setPassword(target.value)}
+            />
+          </label>
         </div>
-      )}
+        <button type="submit">login</button>
+      </form>
 
-      <button onClick={() => setShowAll(!showAll)}>
-        show {showAll ? 'important' : 'all'}
-      </button>
-
+      <div>
+        <button onClick={() => setShowAll(!showAll)}>
+          show {showAll ? 'important' : 'all'}
+        </button>
+      </div>
       <ul>
         {notesToShow.map(note => (
           <Note
@@ -142,10 +106,11 @@ const App = () => {
           />
         ))}
       </ul>
-
-      <footer className="footer">
-        Note app, Department of Computer Science, University of Helsinki 2023
-      </footer>
+      <form onSubmit={addNote}>
+        <input value={newNote} onChange={handleNoteChange} />
+        <button type="submit">save</button>
+      </form>
+      <Footer />
     </div>
   )
 }
