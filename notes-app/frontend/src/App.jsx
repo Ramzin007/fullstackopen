@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react'
 import Footer from './components/Footer'
 import Note from './components/Note'
 import Notification from './components/Notification'
-import noteService from './services/notes'
 import loginService from './services/login'
+import noteService from './services/notes'
 
 const App = () => {
   const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('')
   const [showAll, setShowAll] = useState(true)
   const [errorMessage, setErrorMessage] = useState(null)
-  const [username, setUsername] = useState('') 
-  const [password, setPassword] = useState('') 
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
 
   useEffect(() => {
@@ -20,18 +20,41 @@ const App = () => {
     })
   }, [])
 
-  const addNote = event => {
-    event.preventDefault()
-    const noteObject = {
-      content: newNote,
-      important: Math.random() > 0.5
+  useEffect(() => {
+    const loggedUserJSON = window.localStorage.getItem('loggedNoteappUser')
+    if (loggedUserJSON) {
+      const user = JSON.parse(loggedUserJSON)
+      setUser(user)
+      noteService.setToken(user.token)
     }
+  }, [])
 
-    noteService.create(noteObject).then(returnedNote => {
+  const addNote = event => {
+  event.preventDefault()
+
+  const noteObject = {
+    content: newNote,
+    important: Math.random() > 0.5
+  }
+
+  noteService
+    .create(noteObject)
+    .then(returnedNote => {
       setNotes(notes.concat(returnedNote))
       setNewNote('')
     })
-  }
+    .catch(error => {
+      console.log(error.response?.data || error.message)
+
+      setErrorMessage(
+        error.response?.data?.error || 'failed to add note'
+      )
+
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+    })
+}
 
   const toggleImportanceOf = id => {
     const note = notes.find(n => n.id === id)
@@ -55,9 +78,12 @@ const App = () => {
 
   const handleLogin = async event => {
     event.preventDefault()
-    
+
     try {
       const user = await loginService.login({ username, password })
+
+      window.localStorage.setItem('loggedNoteappUser', JSON.stringify(user))
+      noteService.setToken(user.token)
       setUser(user)
       setUsername('')
       setPassword('')
