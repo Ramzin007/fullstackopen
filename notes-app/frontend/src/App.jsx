@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import Note from './components/Note'
+import Notification from './components/Notification'
+import LoginForm from './components/LoginForm'
+import NoteForm from './components/NoteForm'
+import Togglable from './components/Togglable'
 import noteService from './services/notes'
 import loginService from './services/login'
 
 const App = () => {
   const [notes, setNotes] = useState([])
-  const [newNote, setNewNote] = useState('')
   const [showAll, setShowAll] = useState(true)
-
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [user, setUser] = useState(() => {
-    const loggedUserJSON = window.localStorage.getItem('loggedNoteAppUser')
-    return loggedUserJSON ? JSON.parse(loggedUserJSON) : null
-  })
-
+  const [user, setUser] = useState(null)
   const [message, setMessage] = useState(null)
+  const [messageType, setMessageType] = useState('success')
+
+  const noteFormRef = useRef()
 
   useEffect(() => {
     noteService.getAll().then(initialNotes => {
@@ -23,19 +23,27 @@ const App = () => {
   }, [])
 
   useEffect(() => {
-    if (user) {
+    const loggedUserJSON = window.localStorage.getItem('loggedNoteAppUser')
+
+    if (loggedUserJSON) {
+      const user = JSON.parse(loggedUserJSON)
+      setUser(user)
       noteService.setToken(user.token)
     }
-  }, [user])
+  }, [])
 
-  const handleLogin = async event => {
-    event.preventDefault()
+  const showNotification = (text, type = 'success') => {
+    setMessage(text)
+    setMessageType(type)
 
+    setTimeout(() => {
+      setMessage(null)
+    }, 5000)
+  }
+
+  const handleLogin = async credentials => {
     try {
-      const user = await loginService.login({
-        username,
-        password
-      })
+      const user = await loginService.login(credentials)
 
       window.localStorage.setItem(
         'loggedNoteAppUser',
@@ -44,27 +52,31 @@ const App = () => {
 
       noteService.setToken(user.token)
       setUser(user)
-      setUsername('')
-      setPassword('')
-      setMessage('Login successful')
-    } catch (error) {
-      console.error(error)
-      setMessage('Wrong username or password')
+      showNotification(`${user.name} logged in`)
+    } catch (exception) {
+      showNotification('wrong username or password', 'error')
     }
   }
 
-  const addNote = async event => {
-    event.preventDefault()
+  const handleLogout = () => {
+    window.localStorage.removeItem('loggedNoteAppUser')
+    noteService.setToken(null)
+    setUser(null)
+  }
 
-    const noteObject = {
-      content: newNote,
-      important: Math.random() < 0.5
+  const addNote = async noteObject => {
+    noteFormRef.current.toggleVisibility()
+
+    try {
+      const returnedNote = await noteService.create(noteObject)
+      setNotes(notes.concat(returnedNote))
+      showNotification(`added '${returnedNote.content}'`)
+    } catch (exception) {
+      showNotification(
+        exception.response?.data?.error || 'failed to add note',
+        'error'
+      )
     }
-
-    const returnedNote = await noteService.create(noteObject)
-
-    setNotes(notes.concat(returnedNote))
-    setNewNote('')
   }
 
   const toggleImportanceOf = async id => {
@@ -75,70 +87,45 @@ const App = () => {
       important: !note.important
     }
 
-    const returnedNote = await noteService.update(id, changedNote)
-
-    setNotes(notes.map(note => note.id !== id ? note : returnedNote))
-  }
-
-  const logout = () => {
-    window.localStorage.removeItem('loggedNoteAppUser')
-    setUser(null)
-    noteService.setToken(null)
+    try {
+      const returnedNote = await noteService.update(id, changedNote)
+      setNotes(notes.map(note => note.id !== id ? note : returnedNote))
+    } catch (exception) {
+      showNotification(
+        `note '${note.content}' was already removed from server`,
+        'error'
+      )
+      setNotes(notes.filter(n => n.id !== id))
+    }
   }
 
   const notesToShow = showAll
     ? notes
     : notes.filter(note => note.important)
 
-  const loginForm = () => (
-    <form onSubmit={handleLogin}>
-      <div>
-        username
-        <input
-          value={username}
-          onChange={({ target }) => setUsername(target.value)}
-        />
-      </div>
-
-      <div>
-        password
-        <input
-          type="password"
-          value={password}
-          onChange={({ target }) => setPassword(target.value)}
-        />
-      </div>
-
-      <button type="submit">login</button>
-    </form>
-  )
-
-  const noteForm = () => (
-    <form onSubmit={addNote}>
-      <input
-        value={newNote}
-        onChange={({ target }) => setNewNote(target.value)}
-      />
-      <button type="submit">save</button>
-    </form>
-  )
-
   return (
     <div>
-      <h1>Notes</h1>
+      <h1>Notes app</h1>
 
-      {message && <p>{message}</p>}
+      <Notification message={message} type={messageType} />
 
-      {!user && loginForm()}
+      {!user && (
+        <div>
+          <h2>Login</h2>
+          <LoginForm handleLogin={handleLogin} />
+        </div>
+      )}
 
       {user && (
         <div>
           <p>
             {user.name} logged in
-            <button onClick={logout}>logout</button>
+            <button onClick={handleLogout}>logout</button>
           </p>
 
-          {noteForm()}
+          <Togglable buttonLabel="new note" ref={noteFormRef}>
+            <NoteForm createNote={addNote} />
+          </Togglable>
         </div>
       )}
 
@@ -148,14 +135,17 @@ const App = () => {
 
       <ul>
         {notesToShow.map(note => (
-          <li key={note.id}>
-            {note.content}
-            <button onClick={() => toggleImportanceOf(note.id)}>
-              make {note.important ? 'not important' : 'important'}
-            </button>
-          </li>
+          <Note
+            key={note.id}
+            note={note}
+            toggleImportance={() => toggleImportanceOf(note.id)}
+          />
         ))}
       </ul>
+
+      <footer className="footer">
+        Note app, Department of Computer Science, University of Helsinki 2023
+      </footer>
     </div>
   )
 }
