@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Blog from './components/Blog'
 import LoginForm from './components/LoginForm'
 import NewBlog from './components/NewBlog'
 import Notification from './components/Notification'
-
+import Togglable from './components/Togglable'
 import blogService from './services/blogs'
 import loginService from './services/login'
 
@@ -117,9 +117,10 @@ const App = () => {
         </button>
       </p>
 
-      <h2>create new</h2>
-
-      <NewBlog createBlog={addBlog} />
+      <Togglable buttonLabel="create new blog">
+        <h2>create new</h2>
+        <NewBlog createBlog={addBlog} />
+      </Togglable>
 
       {blogs.map(blog => (
         <Blog
