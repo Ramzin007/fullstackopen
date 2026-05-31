@@ -14,10 +14,33 @@ const App = () => {
     )  
   }, [])
 
-  const handleLogin = async credentials => {
-    const user = await loginService.login(credentials)
+  useEffect(() => {
+  const loggedUserJSON =
+    window.localStorage.getItem('loggedBlogappUser')
+
+  if (loggedUserJSON) {
+    const user = JSON.parse(loggedUserJSON)
+
     setUser(user)
+    blogService.setToken(user.token)
   }
+}, [])
+
+  const handleLogin = async credentials => {
+  try {
+    const user = await loginService.login(credentials)
+
+    window.localStorage.setItem(
+      'loggedBlogappUser',
+      JSON.stringify(user)
+    )
+
+    blogService.setToken(user.token)
+    setUser(user)
+  } catch (exception) {
+    console.log('wrong credentials')
+  }
+}
 
     if (user === null) {
     return (
