@@ -1,9 +1,9 @@
-import { useState, useEffect} from 'react'
+import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
 import LoginForm from './components/LoginForm'
 import NewBlog from './components/NewBlog'
 import Notification from './components/Notification'
-import Togglable from './components/Togglable'
+
 import blogService from './services/blogs'
 import loginService from './services/login'
 
@@ -52,7 +52,6 @@ const App = () => {
 
       blogService.setToken(user.token)
       setUser(user)
-
     } catch (exception) {
       showNotification(
         'wrong username or password',
@@ -74,10 +73,8 @@ const App = () => {
       setBlogs(blogs.concat(returnedBlog))
 
       showNotification(
-        `a new blog ${returnedBlog.title} by ${returnedBlog.author} added`,
-        'success'
+        `a new blog ${returnedBlog.title} by ${returnedBlog.author} added`
       )
-
     } catch (exception) {
       showNotification(
         exception.response?.data?.error || 'failed to create blog',
@@ -85,6 +82,29 @@ const App = () => {
       )
     }
   }
+
+  const handleLike = async blog => {
+  try {
+    const updatedBlog = {
+      title: blog.title,
+      author: blog.author,
+      url: blog.url,
+      likes: blog.likes + 1,
+      user: blog.user?.id || blog.user?._id
+    }
+
+    const returnedBlog = await blogService.update(blog.id, updatedBlog)
+
+    setBlogs(
+      blogs.map(b =>
+        b.id !== blog.id ? b : returnedBlog
+      )
+    )
+  } catch (exception) {
+    console.log(exception)
+    showNotification('failed to update likes', 'error')
+  }
+}
 
   if (user === null) {
     return (
@@ -117,15 +137,15 @@ const App = () => {
         </button>
       </p>
 
-      <Togglable buttonLabel="create new blog">
-        <h2>create new</h2>
-        <NewBlog createBlog={addBlog} />
-      </Togglable>
+      <h2>create new</h2>
+
+      <NewBlog createBlog={addBlog} />
 
       {blogs.map(blog => (
         <Blog
           key={blog.id}
           blog={blog}
+          handleLike={handleLike}
         />
       ))}
     </div>
