@@ -84,26 +84,19 @@ const App = () => {
   }
 
   const handleLike = async blog => {
-  try {
-    const updatedBlog = {
-      title: blog.title,
-      author: blog.author,
-      url: blog.url,
-      likes: blog.likes + 1,
-      user: blog.user?.id || blog.user?._id
-    }
-
-    const returnedBlog = await blogService.update(blog.id, updatedBlog)
-
-    setBlogs(
-      blogs.map(b =>
-        b.id !== blog.id ? b : returnedBlog
-      )
-    )
-  } catch (exception) {
-    console.log(exception)
-    showNotification('failed to update likes', 'error')
+  const updatedBlog = {
+    title: blog.title,
+    author: blog.author,
+    url: blog.url,
+    likes: blog.likes + 1,
+    user: blog.user.id
   }
+
+  const returnedBlog = await blogService.update(blog.id, updatedBlog)
+
+  setBlogs(blogs.map(b =>
+    b.id !== blog.id ? b : returnedBlog
+  ))
 }
 
   if (user === null) {
