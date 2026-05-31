@@ -1,46 +1,69 @@
-const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
-const userExtractor = require('../middleware/userExtractor')
+const blogsRouter = require('express').Router()
+const { userExtractor } = require('../utils/middleware')
 
-// 🔹 GET all
-blogsRouter.get('/', async (req, res) => {
-  const blogs = await Blog.find({}).populate('user', {
-    username: 1,
-    name: 1,
-  })
-
-  res.json(blogs)
+blogsRouter.get('/', (request, response) => {
+  Blog.find({})
+    .populate('user', { username: 1, name: 1, id: 1 })
+    .then(blogs => {
+      response.json(blogs)
+    })
 })
 
-// 🔹 POST (requires token)
-blogsRouter.post('/', userExtractor, async (req, res) => {
-  const user = req.user
+blogsRouter.post('/', userExtractor, async (request, response) => {
+  const user = request.user
+  const blog = new Blog(request.body)
 
-  const blog = new Blog({
-    ...req.body,
-    user: user._id,
-  })
+  blog.likes = blog.likes | 0
+  blog.user = user._id
 
-  const saved = await blog.save()
-
-  user.blogs = user.blogs.concat(saved._id)
-  await user.save()
-
-  res.status(201).json(saved)
-})
-
-// 🔹 DELETE (only owner)
-blogsRouter.delete('/:id', userExtractor, async (req, res) => {
-  const blog = await Blog.findById(req.params.id)
-
-  if (!blog) return res.status(404).end()
-
-  if (blog.user.toString() !== req.user.id.toString()) {
-    return res.status(403).json({ error: 'not allowed' })
+  if (!blog.title || !blog.url) {
+    return response.status(400).send({ error: 'title or url missing' })
   }
 
-  await Blog.findByIdAndDelete(req.params.id)
-  res.status(204).end()
+  user.blogs = user.blogs.concat(blog._id)
+  await user.save()
+
+  const savedBlog = await blog.save()
+
+  response.status(201).json(savedBlog)
+})
+
+blogsRouter.delete('/:id', userExtractor, async (request, response) => {
+  const user = request.user
+  const blog = await Blog.findById(request.params.id)
+
+  if (!blog) {
+    return response.status(204).end()
+  }
+
+  if (user.id.toString() !== blog.user.toString()) {
+    return response.status(403).json({ error: 'user not authorized' })
+  }
+
+  user.blogs = user.blogs.filter(b => b.id.toString() !== blog.id.toString())
+
+  await blog.deleteOne()
+  response.status(204).end()
+})
+
+blogsRouter.put('/:id', async (request, response) => {
+  const { title, author, url, likes } = request.body
+
+  const blog = await Blog.findById(request.params.id)
+
+  if (!blog) {
+    return response.status(404).end()
+  }
+
+  blog.title = title
+  blog.author = author
+  blog.url = url
+  blog.likes = likes
+
+  const updatedBlog = await blog.save()
+
+  response.json(updatedBlog)
 })
 
 module.exports = blogsRouter
