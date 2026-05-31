@@ -53,10 +53,7 @@ const App = () => {
       blogService.setToken(user.token)
       setUser(user)
     } catch (exception) {
-      showNotification(
-        'wrong username or password',
-        'error'
-      )
+      showNotification('wrong username or password', 'error')
     }
   }
 
@@ -73,7 +70,8 @@ const App = () => {
       setBlogs(blogs.concat(returnedBlog))
 
       showNotification(
-        `a new blog ${returnedBlog.title} by ${returnedBlog.author} added`
+        `a new blog ${returnedBlog.title} by ${returnedBlog.author} added`,
+        'success'
       )
     } catch (exception) {
       showNotification(
@@ -84,30 +82,57 @@ const App = () => {
   }
 
   const handleLike = async blog => {
-  const updatedBlog = {
-    title: blog.title,
-    author: blog.author,
-    url: blog.url,
-    likes: blog.likes + 1,
-    user: blog.user.id
+    try {
+      const updatedBlog = {
+        title: blog.title,
+        author: blog.author,
+        url: blog.url,
+        likes: blog.likes + 1,
+        user: blog.user?.id || blog.user?._id
+      }
+
+      const returnedBlog = await blogService.update(blog.id, updatedBlog)
+
+      setBlogs(
+        blogs.map(b =>
+          b.id !== blog.id ? b : returnedBlog
+        )
+      )
+    } catch (exception) {
+      showNotification('failed to update likes', 'error')
+    }
   }
 
-  const returnedBlog = await blogService.update(blog.id, updatedBlog)
+  const handleDelete = async blog => {
+    const ok = window.confirm(
+      `Remove blog ${blog.title} by ${blog.author}?`
+    )
 
-  setBlogs(blogs.map(b =>
-    b.id !== blog.id ? b : returnedBlog
-  ))
-}
+    if (!ok) return
+
+    try {
+      await blogService.remove(blog.id)
+
+      setBlogs(blogs.filter(b => b.id !== blog.id))
+
+      showNotification(
+        `removed blog ${blog.title} by ${blog.author}`,
+        'success'
+      )
+    } catch (exception) {
+      showNotification(
+        exception.response?.data?.error || 'failed to delete blog',
+        'error'
+      )
+    }
+  }
 
   if (user === null) {
     return (
       <div>
         <h2>log in to application</h2>
 
-        <Notification
-          message={message}
-          type={messageType}
-        />
+        <Notification message={message} type={messageType} />
 
         <LoginForm handleLogin={handleLogin} />
       </div>
@@ -118,10 +143,7 @@ const App = () => {
     <div>
       <h2>blogs</h2>
 
-      <Notification
-        message={message}
-        type={messageType}
-      />
+      <Notification message={message} type={messageType} />
 
       <p>
         {user.name} logged in
@@ -137,12 +159,14 @@ const App = () => {
       {[...blogs]
         .sort((a, b) => b.likes - a.likes)
         .map(blog => (
-        <Blog
-          key={blog.id}
-          blog={blog}
-          handleLike={handleLike}
-        />
-      ))}
+          <Blog
+            key={blog.id}
+            blog={blog}
+            handleLike={handleLike}
+            handleDelete={handleDelete}
+            user={user}
+          />
+        ))}
     </div>
   )
 }

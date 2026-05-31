@@ -47,11 +47,7 @@ const remove = async id => {
     }
   }
 
-  const response = await axios.delete(
-    `${baseUrl}/${id}`,
-    config
-  )
-
+  const response = await axios.delete(`${baseUrl}/${id}`, config)
   return response.data
 }
 
