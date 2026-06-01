@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react'
-import { test, expect } from 'vitest'
+import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import Blog from './Blog'
 
-test('url and likes are shown when view button is clicked', async () => {
+test('if like button is clicked twice, event handler is called twice', async () => {
   const blog = {
     title: 'React patterns',
     author: 'Michael Chan',
@@ -15,18 +15,25 @@ test('url and likes are shown when view button is clicked', async () => {
     }
   }
 
-  render(<Blog blog={blog} />)
+  const mockHandler = vi.fn()
+
+  render(
+    <Blog
+      blog={blog}
+      handleLike={mockHandler}
+    />
+  )
 
   const user = userEvent.setup()
 
-  const button = screen.getByText('view')
-  await user.click(button)
+  // show details first
+  const viewButton = screen.getByText('view')
+  await user.click(viewButton)
 
-  expect(
-    screen.getByText('https://reactpatterns.com')
-  ).toBeVisible()
+  const likeButton = screen.getByText('like')
 
-  expect(
-    screen.getByText('likes 7')
-  ).toBeVisible()
+  await user.click(likeButton)
+  await user.click(likeButton)
+
+  expect(mockHandler.mock.calls).toHaveLength(2)
 })
