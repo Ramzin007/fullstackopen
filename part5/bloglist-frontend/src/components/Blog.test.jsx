@@ -1,8 +1,9 @@
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { test, expect } from 'vitest'
+import userEvent from '@testing-library/user-event'
 import Blog from './Blog'
 
-test('renders title and author but not url or likes by default', () => {
+test('url and likes are shown when view button is clicked', async () => {
   const blog = {
     title: 'React patterns',
     author: 'Michael Chan',
@@ -14,25 +15,18 @@ test('renders title and author but not url or likes by default', () => {
     }
   }
 
-  const { container } = render(
-    <Blog blog={blog} />
-  )
+  render(<Blog blog={blog} />)
 
-  const element = container.querySelector('.blog')
+  const user = userEvent.setup()
 
-  expect(element).toHaveTextContent(
-    'React patterns'
-  )
+  const button = screen.getByText('view')
+  await user.click(button)
 
-  expect(element).toHaveTextContent(
-    'Michael Chan'
-  )
+  expect(
+    screen.getByText('https://reactpatterns.com')
+  ).toBeVisible()
 
-  expect(element).not.toHaveTextContent(
-    'https://reactpatterns.com'
-  )
-
-  expect(element).not.toHaveTextContent(
-    'likes'
-  )
+  expect(
+    screen.getByText('likes 7')
+  ).toBeVisible()
 })
