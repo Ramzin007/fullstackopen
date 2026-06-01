@@ -26,7 +26,6 @@ test('if like button is clicked twice, event handler is called twice', async () 
 
   const user = userEvent.setup()
 
-  // show details first
   const viewButton = screen.getByText('view')
   await user.click(viewButton)
 
