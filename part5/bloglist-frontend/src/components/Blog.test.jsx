@@ -1,38 +1,31 @@
 import { render, screen } from '@testing-library/react'
 import { test, expect, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
-import Blog from './Blog'
+import NewBlog from './NewBlog'
 
-test('if like button is clicked twice, event handler is called twice', async () => {
-  const blog = {
-    title: 'React patterns',
-    author: 'Michael Chan',
-    url: 'https://reactpatterns.com',
-    likes: 7,
-    user: {
-      username: 'mluukkai',
-      name: 'Matti Luukkainen'
-    }
-  }
-
-  const mockHandler = vi.fn()
-
-  render(
-    <Blog
-      blog={blog}
-      handleLike={mockHandler}
-    />
-  )
+test('calls event handler with correct details when a new blog is created', async () => {
+  const createBlog = vi.fn()
 
   const user = userEvent.setup()
 
-  const viewButton = screen.getByText('view')
-  await user.click(viewButton)
+  render(
+    <NewBlog createBlog={createBlog} />
+  )
 
-  const likeButton = screen.getByText('like')
+  const inputs = screen.getAllByRole('textbox')
 
-  await user.click(likeButton)
-  await user.click(likeButton)
+  await user.type(inputs[0], 'React Testing')
+  await user.type(inputs[1], 'Muhammed Ramzin')
+  await user.type(inputs[2], 'https://react-testing.com')
 
-  expect(mockHandler.mock.calls).toHaveLength(2)
+  const button = screen.getByText('create')
+  await user.click(button)
+
+  expect(createBlog.mock.calls).toHaveLength(1)
+
+  expect(createBlog.mock.calls[0][0]).toEqual({
+    title: 'React Testing',
+    author: 'Muhammed Ramzin',
+    url: 'https://react-testing.com'
+  })
 })
