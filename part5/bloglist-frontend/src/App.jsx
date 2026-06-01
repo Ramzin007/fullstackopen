@@ -52,7 +52,7 @@ const App = () => {
 
       blogService.setToken(user.token)
       setUser(user)
-    } catch (exception) {
+    } catch {
       showNotification('wrong username or password', 'error')
     }
   }
@@ -98,7 +98,7 @@ const App = () => {
           b.id !== blog.id ? b : returnedBlog
         )
       )
-    } catch (exception) {
+    } catch {
       showNotification('failed to update likes', 'error')
     }
   }
