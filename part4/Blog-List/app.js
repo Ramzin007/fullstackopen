@@ -6,10 +6,16 @@ const loginRouter = require('./controllers/login')
 const usersRouter = require('./controllers/users')
 const config = require('./utils/config')
 const middleware = require('./utils/middleware')
+const testingRouter = require('./controllers/testing')
+
 
 const app = express()
 
 mongoose.connect(config.MONGODB_URI)
+
+if (process.env.NODE_ENV === 'test') {
+  app.use('/api/testing', testingRouter)
+}
 
 app.use(express.json())
 app.use(middleware.requestLogger)

@@ -57,6 +57,8 @@ const App = () => {
     }
   }
 
+  const [newBlogVisible, setNewBlogVisible] = useState(false)
+
   const handleLogout = () => {
     window.localStorage.removeItem('loggedBlogappUser')
     blogService.setToken(null)
@@ -68,6 +70,7 @@ const App = () => {
       const returnedBlog = await blogService.create(blogObject)
 
       setBlogs(blogs.concat(returnedBlog))
+      setNewBlogVisible(false)
 
       showNotification(
         `a new blog ${returnedBlog.title} by ${returnedBlog.author} added`,
@@ -83,6 +86,7 @@ const App = () => {
 
   const handleLike = async blog => {
     try {
+      const blogId = blog.id || blog._id
       const updatedBlog = {
         title: blog.title,
         author: blog.author,
@@ -91,12 +95,13 @@ const App = () => {
         user: blog.user?.id || blog.user?._id
       }
 
-      const returnedBlog = await blogService.update(blog.id, updatedBlog)
+      const returnedBlog = await blogService.update(blogId, updatedBlog)
 
       setBlogs(
-        blogs.map(b =>
-          b.id !== blog.id ? b : returnedBlog
-        )
+        blogs.map(b => {
+          const currentId = b.id || b._id
+          return currentId !== blogId ? b : returnedBlog
+        })
       )
     } catch {
       showNotification('failed to update likes', 'error')
@@ -111,9 +116,15 @@ const App = () => {
     if (!ok) return
 
     try {
-      await blogService.remove(blog.id)
+      const blogId = blog.id || blog._id
+      await blogService.remove(blogId)
 
-      setBlogs(blogs.filter(b => b.id !== blog.id))
+      setBlogs(
+        blogs.filter(b => {
+          const currentId = b.id || b._id
+          return currentId !== blogId
+        })
+      )
 
       showNotification(
         `removed blog ${blog.title} by ${blog.author}`,
@@ -154,13 +165,24 @@ const App = () => {
 
       <h2>create new</h2>
 
-      <NewBlog createBlog={addBlog} />
+      {newBlogVisible ? (
+        <>
+          <NewBlog createBlog={addBlog} />
+          <button onClick={() => setNewBlogVisible(false)}>
+            cancel
+          </button>
+        </>
+      ) : (
+        <button onClick={() => setNewBlogVisible(true)}>
+          new blog
+        </button>
+      )}
 
       {[...blogs]
         .sort((a, b) => b.likes - a.likes)
         .map(blog => (
           <Blog
-            key={blog.id}
+            key={blog.id || blog._id}
             blog={blog}
             handleLike={handleLike}
             handleDelete={handleDelete}

@@ -18,7 +18,7 @@ const Blog = ({ blog, handleLike, handleDelete, user }) => {
     blogUserId?.toString() === loggedUserId?.toString()
 
   return (
-    <div style={blogStyle}>
+    <div style={blogStyle} data-testid="blog">
       <div className="blog">
         {blog.title} {blog.author}
         <button onClick={() => setVisible(!visible)}>
