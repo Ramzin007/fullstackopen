@@ -1,39 +1,64 @@
-import { useState } from 'react'
+import {
+  TextField,
+  Button,
+  Paper,
+  Typography
+} from '@mui/material'
 
-const LoginForm = ({ handleLogin }) => {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-
-  const onSubmit = event => {
-    event.preventDefault()
-
-    handleLogin({
-      username,
-      password
-    })
-
-    setUsername('')
-    setPassword('')
-  }
-
+const LoginForm = ({
+  username,
+  password,
+  setUsername,
+  setPassword,
+  handleLogin
+}) => {
   return (
-    <form onSubmit={onSubmit}>
-      <div>
-        <label>
-          username
-          <input value={username} onChange={({ target }) => setUsername(target.value)} />
-        </label>
-      </div>
+    <Paper
+      elevation={3}
+      sx={{
+        maxWidth: 400,
+        p: 3,
+        mt: 3
+      }}
+    >
+      <Typography
+        variant="h5"
+        gutterBottom
+      >
+        Log in to application
+      </Typography>
 
-      <div>
-        <label>
-          password
-          <input type="password" value={password} onChange={({ target }) => setPassword(target.value)} />
-        </label>
-      </div>
+      <form onSubmit={handleLogin}>
+        <TextField
+          label="Username"
+          fullWidth
+          margin="normal"
+          value={username}
+          onChange={({ target }) =>
+            setUsername(target.value)
+          }
+        />
 
-      <button type="submit">login</button>
-    </form>
+        <TextField
+          label="Password"
+          type="password"
+          fullWidth
+          margin="normal"
+          value={password}
+          onChange={({ target }) =>
+            setPassword(target.value)
+          }
+        />
+
+        <Button
+          type="submit"
+          variant="contained"
+          sx={{ mt: 2 }}
+        >
+          Login
+        </Button>
+      </form>
+    </Paper>
   )
 }
 

@@ -1,26 +1,168 @@
-.success {
-  color: green;
-  background: lightgrey;
-  font-size: 20px;
-  border: 3px solid green;
-  border-radius: 5px;
-  padding: 10px;
-  margin-bottom: 10px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.error {
-  color: red;
-  background: lightgrey;
-  font-size: 20px;
-  border: 3px solid red;
-  border-radius: 5px;
-  padding: 10px;
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+button {
+  cursor: pointer;
+  padding: 8px 12px;
+  margin: 0 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background-color: #f0f0f0;
+  border-color: #999;
+}
+
+button[type="submit"] {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+button[type="submit"]:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+input[type="text"],
+input[type="password"] {
+  padding: 8px;
+  margin: 5px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+h2 {
+  margin-top: 20px;
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+
+h3 {
+  margin-top: 15px;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+form {
+  background-color: white;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+form div {
   margin-bottom: 10px;
 }
 
 .blog {
-  padding: 10px 2px;
-  border: solid;
-  border-width: 1px;
-  margin-bottom: 5px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.blog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.blog-title {
+  font-weight: bold;
+  flex-grow: 1;
+}
+
+.blog-author {
+  color: #666;
+  font-size: 14px;
+}
+
+.blog-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.blog-url {
+  margin: 5px 0;
+  color: #0066cc;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.blog-likes {
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.likes-count {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.blog-user {
+  margin: 10px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.remove-button {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+  margin-top: 10px;
+}
+
+.remove-button:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
+.view-button {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.like-button {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+p {
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }

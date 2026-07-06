@@ -8,12 +8,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3003',
         changeOrigin: true,
-        secure: false
-      }
-    }
+      },
+    },
   },
-  test: {
-    environment: 'jsdom',
-    setupFiles: './src/testSetup.js'
-  }
 })
